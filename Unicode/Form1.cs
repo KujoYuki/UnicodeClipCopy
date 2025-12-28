@@ -1,5 +1,6 @@
 using System.Text;
 using System.Windows.Forms;
+using static System.Windows.Forms.DataFormats;
 
 namespace Unicode
 {
@@ -9,6 +10,7 @@ namespace Unicode
         public Form1()
         {
             InitializeComponent();
+            displayPictureBox.AllowDrop = true;
         }
 
         /// <summary>
@@ -33,8 +35,11 @@ namespace Unicode
 
             // 最初の1文字を取得
             string displayChar = enlargeTextBox.Text.Substring(0, 1);
+            int codePoint = char.ConvertToUtf32(displayChar, 0);
+            selectedUnicodeTextBox.Text = $"U+{codePoint:X4}";
+
             // 新しいビットマップを作成
-            Bitmap bmp = new Bitmap(enlargePictureBox.Width, enlargePictureBox.Height);
+            Bitmap bmp = new Bitmap(enlargePictureBox.Width, enlargePictureBox.Width);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(enlargePictureBox.BackColor);
@@ -44,30 +49,60 @@ namespace Unicode
                     // 描画品質の設定
                     g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-                    // 大きなフォントを作成（PictureBoxのサイズに基づく）
-                    float fontSize = Math.Min(enlargePictureBox.Width, enlargePictureBox.Height) * 0.7f;
-                    using (Font font = new Font(enlargeTextBox.Font.FontFamily, fontSize, FontStyle.Regular))
+                    // 余白を確保（10%）
+                    float margin = 0.1f;
+                    float availableWidth = enlargePictureBox.Width * (1 - margin * 2);
+                    float availableHeight = availableWidth;
+
+                    // 初期フォントサイズ
+                    float fontSize = Math.Min(enlargePictureBox.Width, enlargePictureBox.Width) * 1.0f;
+
+                    using StringFormat format = new StringFormat(System.Drawing.StringFormat.GenericTypographic);
+                    format.FormatFlags = StringFormatFlags.MeasureTrailingSpaces;
+
+                    Font? font = null;
+                    RectangleF textBounds;
+
+                    // 文字が収まるまでフォントサイズを縮小
+                    do
                     {
-                        // 文字のサイズを測定
-                        SizeF textSize = g.MeasureString(displayChar, font);
+                        font?.Dispose();
+                        font = new Font(enlargeTextBox.Font.FontFamily, fontSize, FontStyle.Regular);
 
-                        // 中央に配置するための座標を計算
-                        float x = (enlargePictureBox.Width - textSize.Width) / 2;
-                        float y = (enlargePictureBox.Height - textSize.Height) / 2;
+                        // 実際の描画領域を測定
+                        CharacterRange[] characterRanges = { new CharacterRange(0, displayChar.Length) };
+                        format.SetMeasurableCharacterRanges(characterRanges);
+                        Region[] regions = g.MeasureCharacterRanges(displayChar, font,
+                            new RectangleF(0, 0, enlargePictureBox.Width * 3, enlargePictureBox.Width * 3), format);
+                        textBounds = regions[0].GetBounds(g);
+                        regions[0].Dispose();
 
-                        // 文字を描画
-                        using (Brush brush = new SolidBrush(enlargeTextBox.ForeColor))
+                        // 文字が収まるかチェック
+                        if (textBounds.Width <= availableWidth && textBounds.Height <= availableHeight)
                         {
-                            g.DrawString(displayChar, font, brush, x, y);
+                            break;
                         }
+
+                        // フォントサイズを5%縮小
+                        fontSize *= 0.95f;
+
+                    } while (fontSize > 10); // 最小フォントサイズの制限
+
+                    // 中央に配置するための座標を計算
+                    float x = (enlargePictureBox.Width - textBounds.Width) / 2 - textBounds.X;
+                    float y = (enlargePictureBox.Width - textBounds.Height) / 2 - textBounds.Y;
+
+                    // 文字を描画
+                    using (Brush brush = new SolidBrush(enlargeTextBox.ForeColor))
+                    {
+                        g.DrawString(displayChar, font, brush, x, y, format);
                     }
+
+                    font?.Dispose();
                 }
             }
 
             enlargePictureBox.Image = bmp;
-
-            int codePoint = char.ConvertToUtf32(displayChar, 0);
-            selectedUnicodeTextBox.Text = $"U+{codePoint:X4}";
         }
 
         /// <summary>
@@ -212,5 +247,90 @@ namespace Unicode
             clipEndIndexTextBox.Text = $"{(endCode - 1):X4}";
             generateAllCoyButton_Click(sender, e);
         }
+
+        private void displayPictureBox_DragDrop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // 既存の画像を破棄
+                if (enlargePictureBox.Image != null)
+                {
+                    enlargePictureBox.Image.Dispose();
+                }
+
+                // ファイルがドロップされた場合
+                if (e.Data!.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+                    if (files.Length > 0)
+                    {
+                        string filePath = files[0];
+
+                        // 画像ファイルかチェック
+                        string ext = Path.GetExtension(filePath).ToLower();
+                        if (ext == ".png" || ext == ".jpg")
+                        {
+                            // ファイルから画像を読み込み
+                            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                            {
+                                displayPictureBox.Image = Image.FromStream(fs);
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("サポートされていない画像形式です。", "エラー",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                // Bitmapが直接ドロップされた場合
+                else if (e.Data.GetDataPresent(DataFormats.Bitmap))
+                {
+                    displayPictureBox.Image = (Image)e.Data.GetData(DataFormats.Bitmap)!;
+
+                    // TextBoxをクリア
+                    enlargeTextBox.Text = string.Empty;
+                    selectedUnicodeTextBox.Text = string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"画像の読み込みに失敗しました: {ex.Message}", "エラー",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void displayPictureBox_DragEnter(object sender, DragEventArgs e)
+        {
+            // ファイルがドラッグされているか、画像データがドラッグされているかチェック
+            if (e.Data!.GetDataPresent(DataFormats.FileDrop) ||
+                e.Data.GetDataPresent(DataFormats.Bitmap))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void captureImagesButton_Click(object sender, EventArgs e)
+        {
+            int minX = displayPictureBox.Left;
+            int minY = displayPictureBox.Top;
+            int maxX = selectedUnicodeTextBox.Right;
+            int maxY = selectedUnicodeTextBox.Bottom;
+
+            int captureWidth = maxX - minX;
+            int captureHeight = maxY - minY;
+
+			Bitmap bmp = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
+			//Bitmap bmp = new Bitmap(captureWidth, captureHeight);
+			//this.DrawToBitmap(bmp, new Rectangle(minX, minY, captureWidth, captureHeight));
+			this.DrawToBitmap(bmp, new Rectangle(0, 0, this.ClientSize.Width, this.ClientSize.Height));
+			string unicodeText = selectedUnicodeTextBox.Text;
+            string suffix = fileNameSuffixTextBox.Text;
+			bmp.Save($"{unicodeText}_{suffix}.png");
+		}
     }
 }

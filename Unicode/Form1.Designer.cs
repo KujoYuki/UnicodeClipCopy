@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             clipStartIndexTextBox = new TextBox();
             label1 = new Label();
             label3 = new Label();
@@ -48,9 +49,12 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             previousCodeButton = new Button();
             nextCodeButton = new Button();
+            displayPictureBox = new PictureBox();
+            fileNameSuffixTextBox = new TextBox();
             ((System.ComponentModel.ISupportInitialize)copyCharaCountNumericUpDown).BeginInit();
             ((System.ComponentModel.ISupportInitialize)copySetDGV).BeginInit();
             ((System.ComponentModel.ISupportInitialize)enlargePictureBox).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)displayPictureBox).BeginInit();
             SuspendLayout();
             // 
             // clipStartIndexTextBox
@@ -126,12 +130,15 @@
             // copySetDGV
             // 
             copySetDGV.AllowUserToAddRows = false;
+            dataGridViewCellStyle2.BackColor = Color.Cyan;
+            copySetDGV.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
             copySetDGV.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             copySetDGV.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             copySetDGV.Columns.AddRange(new DataGridViewColumn[] { Index, TextColumn, CopyButton });
             copySetDGV.Location = new Point(12, 97);
             copySetDGV.Name = "copySetDGV";
-            copySetDGV.Size = new Size(431, 257);
+            copySetDGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            copySetDGV.Size = new Size(486, 528);
             copySetDGV.TabIndex = 9;
             copySetDGV.CellContentClick += copySetDGV_CellContentClick;
             copySetDGV.RowPostPaint += copySetDGV_RowPostPaint;
@@ -157,16 +164,18 @@
             // enlargePictureBox
             // 
             enlargePictureBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            enlargePictureBox.Location = new Point(470, 136);
+            enlargePictureBox.BackColor = SystemColors.ControlLightLight;
+            enlargePictureBox.Location = new Point(525, 181);
             enlargePictureBox.Name = "enlargePictureBox";
-            enlargePictureBox.Size = new Size(214, 218);
+            enlargePictureBox.Size = new Size(214, 214);
+            enlargePictureBox.SizeMode = PictureBoxSizeMode.Zoom;
             enlargePictureBox.TabIndex = 10;
             enlargePictureBox.TabStop = false;
             // 
             // enlargeTextBox
             // 
             enlargeTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            enlargeTextBox.Location = new Point(470, 97);
+            enlargeTextBox.Location = new Point(525, 97);
             enlargeTextBox.Name = "enlargeTextBox";
             enlargeTextBox.Size = new Size(100, 23);
             enlargeTextBox.TabIndex = 11;
@@ -185,11 +194,14 @@
             // selectedUnicodeTextBox
             // 
             selectedUnicodeTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            selectedUnicodeTextBox.Location = new Point(587, 97);
+            selectedUnicodeTextBox.Font = new Font("Yu Gothic UI", 20.25F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            selectedUnicodeTextBox.Location = new Point(525, 361);
+            selectedUnicodeTextBox.Multiline = true;
             selectedUnicodeTextBox.Name = "selectedUnicodeTextBox";
             selectedUnicodeTextBox.ReadOnly = true;
-            selectedUnicodeTextBox.Size = new Size(100, 23);
+            selectedUnicodeTextBox.Size = new Size(214, 43);
             selectedUnicodeTextBox.TabIndex = 13;
+            selectedUnicodeTextBox.TextAlign = HorizontalAlignment.Center;
             // 
             // contextMenuStrip1
             // 
@@ -216,11 +228,32 @@
             nextCodeButton.UseVisualStyleBackColor = true;
             nextCodeButton.Click += nextCodeButton_Click;
             // 
+            // displayPictureBox
+            // 
+            displayPictureBox.Location = new Point(525, 127);
+            displayPictureBox.Name = "displayPictureBox";
+            displayPictureBox.Size = new Size(214, 92);
+            displayPictureBox.SizeMode = PictureBoxSizeMode.Zoom;
+            displayPictureBox.TabIndex = 17;
+            displayPictureBox.TabStop = false;
+            displayPictureBox.DragDrop += displayPictureBox_DragDrop;
+            displayPictureBox.DragEnter += displayPictureBox_DragEnter;
+            // 
+            // fileNameSuffixTextBox
+            // 
+            fileNameSuffixTextBox.Location = new Point(525, 453);
+            fileNameSuffixTextBox.Multiline = true;
+            fileNameSuffixTextBox.Name = "fileNameSuffixTextBox";
+            fileNameSuffixTextBox.Size = new Size(214, 62);
+            fileNameSuffixTextBox.TabIndex = 19;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(699, 369);
+            ClientSize = new Size(754, 640);
+            Controls.Add(fileNameSuffixTextBox);
+            Controls.Add(displayPictureBox);
             Controls.Add(nextCodeButton);
             Controls.Add(previousCodeButton);
             Controls.Add(selectedUnicodeTextBox);
@@ -241,13 +274,13 @@
             ((System.ComponentModel.ISupportInitialize)copyCharaCountNumericUpDown).EndInit();
             ((System.ComponentModel.ISupportInitialize)copySetDGV).EndInit();
             ((System.ComponentModel.ISupportInitialize)enlargePictureBox).EndInit();
+            ((System.ComponentModel.ISupportInitialize)displayPictureBox).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private TextBox textBox1;
         private Label label1;
         private Label label3;
         private Label label2;
@@ -267,5 +300,8 @@
         private ContextMenuStrip contextMenuStrip1;
         private Button previousCodeButton;
         private Button nextCodeButton;
+        private PictureBox displayPictureBox;
+        private PictureBox pictureBox1;
+        private TextBox fileNameSuffixTextBox;
     }
 }
