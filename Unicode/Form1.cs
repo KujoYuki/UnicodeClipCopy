@@ -1,4 +1,5 @@
 using System.Text;
+using System.Unicode;
 using System.Windows.Forms;
 using static System.Windows.Forms.DataFormats;
 
@@ -34,12 +35,14 @@ namespace Unicode
             }
 
             // 最初の1文字を取得
-            string displayChar = enlargeTextBox.Text.Substring(0, 1);
+            string displayChar = enlargeTextBox.Text[..1];
             int codePoint = char.ConvertToUtf32(displayChar, 0);
+            string name = UnicodeInfo.GetName(codePoint);
             selectedUnicodeTextBox.Text = $"U+{codePoint:X4}";
+            charaNameTextBox.Text = name;
 
             // 新しいビットマップを作成
-            Bitmap bmp = new Bitmap(enlargePictureBox.Width, enlargePictureBox.Width);
+            var bmp = new Bitmap(enlargePictureBox.Width, enlargePictureBox.Width);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(enlargePictureBox.BackColor);
@@ -57,7 +60,7 @@ namespace Unicode
                     // 初期フォントサイズ
                     float fontSize = Math.Min(enlargePictureBox.Width, enlargePictureBox.Width) * 1.0f;
 
-                    using StringFormat format = new StringFormat(System.Drawing.StringFormat.GenericTypographic);
+                    using var format = new StringFormat(System.Drawing.StringFormat.GenericTypographic);
                     format.FormatFlags = StringFormatFlags.MeasureTrailingSpaces;
 
                     Font? font = null;
@@ -70,7 +73,7 @@ namespace Unicode
                         font = new Font(enlargeTextBox.Font.FontFamily, fontSize, FontStyle.Regular);
 
                         // 実際の描画領域を測定
-                        CharacterRange[] characterRanges = { new CharacterRange(0, displayChar.Length) };
+                        CharacterRange[] characterRanges = { new(0, displayChar.Length) };
                         format.SetMeasurableCharacterRanges(characterRanges);
                         Region[] regions = g.MeasureCharacterRanges(displayChar, font,
                             new RectangleF(0, 0, enlargePictureBox.Width * 3, enlargePictureBox.Width * 3), format);
@@ -152,7 +155,7 @@ namespace Unicode
                         string character = char.ConvertFromUtf32(codePoint);
                         lines[lineCount].Append(character);
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         // 無効なコードポイントはスキップ
                         continue;
@@ -198,7 +201,8 @@ namespace Unicode
                     try
                     {
                         string index = (e.RowIndex + 1).ToString();
-                        string text = $"{index}: {textCell.Value.ToString()!}";
+                        //string text = $"{index}: {textCell.Value.ToString()!}";
+                        string text = $"{textCell.Value.ToString()!}";
                         Clipboard.SetText(text);
                     }
                     catch (Exception ex)
@@ -275,6 +279,12 @@ namespace Unicode
                             {
                                 displayPictureBox.Image = Image.FromStream(fs);
                             }
+
+                            // ファイル名がUnicode番地の場合はその文字を自動入力
+                            string fileName = Path.GetFileNameWithoutExtension(filePath);
+                            fileNameSuffixTextBox.Text = fileName;
+                            Clipboard.SetText(fileName);
+
                         }
                         else
                         {
@@ -324,13 +334,37 @@ namespace Unicode
             int captureWidth = maxX - minX;
             int captureHeight = maxY - minY;
 
-			Bitmap bmp = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
-			//Bitmap bmp = new Bitmap(captureWidth, captureHeight);
-			//this.DrawToBitmap(bmp, new Rectangle(minX, minY, captureWidth, captureHeight));
-			this.DrawToBitmap(bmp, new Rectangle(0, 0, this.ClientSize.Width, this.ClientSize.Height));
-			string unicodeText = selectedUnicodeTextBox.Text;
+            var bmp = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
+            //Bitmap bmp = new Bitmap(captureWidth, captureHeight);
+            //this.DrawToBitmap(bmp, new Rectangle(minX, minY, captureWidth, captureHeight));
+            this.DrawToBitmap(bmp, new Rectangle(0, 0, this.ClientSize.Width, this.ClientSize.Height));
+            string unicodeText = selectedUnicodeTextBox.Text;
             string suffix = fileNameSuffixTextBox.Text;
-			bmp.Save($"{unicodeText}_{suffix}.png");
-		}
+            bmp.Save($"{unicodeText}_{suffix}.png");
+        }
+
+        private void fileNameSuffixTextBox_TextChanged(object sender, EventArgs e)
+        {
+            string input = fileNameSuffixTextBox.Text;
+            if (!input.StartsWith("U+")) return;
+
+            // Unicode文字が入力されたら該当の文字を表示する
+            string hexPart = input[2..];
+            if (int.TryParse(hexPart, System.Globalization.NumberStyles.HexNumber, null, out int codePoint))
+            {
+                try
+                {
+                    // コードポイントから文字を取得
+                    string character = char.ConvertFromUtf32(codePoint);
+
+                    // enlargeTextBoxに文字を設定（これによりenlargeTextBox_TextChangedが呼ばれる）
+                    enlargeTextBox.Text = character;
+                }
+                catch
+                {
+                    return; // 何もしない
+                }
+            }
+        }
     }
 }

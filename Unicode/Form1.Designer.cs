@@ -51,6 +51,8 @@
             nextCodeButton = new Button();
             displayPictureBox = new PictureBox();
             fileNameSuffixTextBox = new TextBox();
+            charaNameTextBox = new TextBox();
+            captureImagesButton = new Button();
             ((System.ComponentModel.ISupportInitialize)copyCharaCountNumericUpDown).BeginInit();
             ((System.ComponentModel.ISupportInitialize)copySetDGV).BeginInit();
             ((System.ComponentModel.ISupportInitialize)enlargePictureBox).BeginInit();
@@ -246,12 +248,36 @@
             fileNameSuffixTextBox.Name = "fileNameSuffixTextBox";
             fileNameSuffixTextBox.Size = new Size(214, 62);
             fileNameSuffixTextBox.TabIndex = 19;
+            fileNameSuffixTextBox.TextChanged += fileNameSuffixTextBox_TextChanged;
+            // 
+            // charaNameTextBox
+            // 
+            charaNameTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            charaNameTextBox.Font = new Font("Yu Gothic UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 128);
+            charaNameTextBox.Location = new Point(525, 401);
+            charaNameTextBox.Name = "charaNameTextBox";
+            charaNameTextBox.ReadOnly = true;
+            charaNameTextBox.Size = new Size(214, 23);
+            charaNameTextBox.TabIndex = 20;
+            charaNameTextBox.TextAlign = HorizontalAlignment.Center;
+            // 
+            // captureImagesButton
+            // 
+            captureImagesButton.Location = new Point(525, 537);
+            captureImagesButton.Name = "captureImagesButton";
+            captureImagesButton.Size = new Size(75, 23);
+            captureImagesButton.TabIndex = 21;
+            captureImagesButton.Text = "保存";
+            captureImagesButton.UseVisualStyleBackColor = true;
+            captureImagesButton.Click += this.captureImagesButton_Click;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(754, 640);
+            Controls.Add(captureImagesButton);
+            Controls.Add(charaNameTextBox);
             Controls.Add(fileNameSuffixTextBox);
             Controls.Add(displayPictureBox);
             Controls.Add(nextCodeButton);
@@ -301,7 +327,8 @@
         private Button previousCodeButton;
         private Button nextCodeButton;
         private PictureBox displayPictureBox;
-        private PictureBox pictureBox1;
         private TextBox fileNameSuffixTextBox;
+        private TextBox charaNameTextBox;
+        private Button captureImagesButton;
     }
 }
